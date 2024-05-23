@@ -19,7 +19,8 @@ pushd "${TMPDIR}" || exit 1
 # docker.io/docker/dockerfile not support linux/loong64
 #
 sed -i '/syntax=docker/d' dockerfiles/deb.dockerfile
-sed -i 's@FROM ${GOLANG_IMAGE}@FROM ghcr.io/loong64/${GOLANG_IMAGE}@g' dockerfiles/deb.dockerfile
+sed -i 's@GOLANG_IMAGE=golang@GOLANG_IMAGE=ghcr.io/loong64/golang@g' common/common.mk
+sed -i 's@DOCKER_BUILDKIT=1 docker build @DOCKER_BUILDKIT=1 docker buildx build --platform linux/loong64 --load @g' Makefile
 
 ################################################################
 # See. https://github.com/containerd/containerd
@@ -33,6 +34,6 @@ make REF=${REF} BUILD_IMAGE=ghcr.io/loong64/debian:trixie-slim
 popd || exit 1
 
 mkdir -p dist
-mv ${TMPDIR}/build/debian/trixie/loongarch64/* dist/
+mv ${TMPDIR}/build/debian/trixie/loong64/* dist/
 
 rm -rf "${TMPDIR:?}"
