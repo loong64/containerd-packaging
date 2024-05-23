@@ -14,7 +14,7 @@ jobs:
 
       - name: Get Version
         run: |
-          CONTAINERD_VERSION=$(curl -sSL https://github.com/docker/containerd-packaging/raw/master/debian/changelog | head -n 1 | grep -oP '\(\K[^\)]+' | cut -d'-' -f1)
+          CONTAINERD_VERSION=v$(curl -sSL https://github.com/docker/containerd-packaging/raw/master/debian/changelog | head -n 1 | grep -oP '\(\K[^\)]+' | cut -d'-' -f1)
           sed -i "s@CONTAINERD_VERSION=.*@CONTAINERD_VERSION=${CONTAINERD_VERSION}@g" build-containerd.sh
           echo "CONTAINERD_VERSION=${CONTAINERD_VERSION}" >> $GITHUB_ENV
           echo ""
@@ -36,7 +36,7 @@ jobs:
           git add .
           git commit -m "Release ${{ env.CONTAINERD_VERSION }}" || true
           git tag ${{ env.CONTAINERD_VERSION }}
-          git push origin ${{ env.CONTAINERD_VERSION }}
+          git push origin ${{ env.CONTAINERD_VERSION }} || true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -77,7 +77,7 @@ jobs:
           git add .
           git commit -m "Release ${{ env.CONTAINERD_VERSION }}" || true
           git tag ${{ env.CONTAINERD_VERSION }}
-          git push origin ${{ env.CONTAINERD_VERSION }}
+          git push origin ${{ env.CONTAINERD_VERSION }}  || true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -116,7 +116,8 @@ jobs:
       - name: Build Containerd Binaries
         if : steps.check-binaries.outputs.create == '1'
         run: |
-          docker buildx build --platform linux/loong64 -t containerd-static-loong64:${{ env.CONTAINERD_VERSION }} -f binaries/Dockerfile . --load
+          cd binaries
+          docker buildx build --platform linux/loong64 -t containerd-static-loong64:${{ env.CONTAINERD_VERSION }} . --load
 
       - name: Upgrade Release
         if : steps.check-binaries.outputs.create == '1'
@@ -133,7 +134,7 @@ jobs:
     steps:
       - name: Get Version
         run: |
-          CONTAINERD_VERSION=$(curl -sSL https://github.com/docker/containerd-packaging/raw/master/debian/changelog | head -n 1 | grep -oP '\(\K[^\)]+' | cut -d'-' -f1)
+          CONTAINERD_VERSION=v$(curl -sSL https://github.com/docker/containerd-packaging/raw/master/debian/changelog | head -n 1 | grep -oP '\(\K[^\)]+' | cut -d'-' -f1)
           echo "CONTAINERD_VERSION=${CONTAINERD_VERSION}" >> $GITHUB_ENV
 
       - uses: actions/checkout@v4
