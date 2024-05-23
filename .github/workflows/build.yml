@@ -14,7 +14,7 @@ jobs:
 
       - name: Get Version
         run: |
-          CONTAINERD_VERSION=$(curl -sSL https://github.com/docker/containerd-packaging/raw/master/debian/changelog | head -n 1 | grep -oP '\(\K[^\)]+' | cut -d'-' -f1)
+          CONTAINERD_VERSION=v$(curl -sSL https://github.com/docker/containerd-packaging/raw/master/debian/changelog | head -n 1 | grep -oP '\(\K[^\)]+' | cut -d'-' -f1)
           sed -i "s@CONTAINERD_VERSION=.*@CONTAINERD_VERSION=${CONTAINERD_VERSION}@g" build-containerd.sh
           echo "CONTAINERD_VERSION=${CONTAINERD_VERSION}" >> $GITHUB_ENV
           echo ""
@@ -36,14 +36,14 @@ jobs:
           git add .
           git commit -m "Release ${{ env.CONTAINERD_VERSION }}" || true
           git tag ${{ env.CONTAINERD_VERSION }}
-          git push origin ${{ env.CONTAINERD_VERSION }}
+          git push origin ${{ env.CONTAINERD_VERSION }} || true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create Release
         if : steps.check-release.outputs.create == '1'
         run: |
-          gh release create ${{ env.CONTAINERD_VERSION }} -R ${{ github.repository }} --notes "**Full Changelog**: [${{ env.CONTAINERD_VERSION }}](https://github.com/containerd/containerd/releases/tag/${{ env.CONTAINERD_VERSION }})"
+          gh release create ${{ env.CONTAINERD_VERSION }} -R ${{ github.repository }} --title ${{ env.CONTAINERD_VERSION }} --notes "**Full Changelog**: [${{ env.CONTAINERD_VERSION }}](https://github.com/containerd/containerd/releases/tag/${{ env.CONTAINERD_VERSION }})"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -77,14 +77,14 @@ jobs:
           git add .
           git commit -m "Release ${{ env.CONTAINERD_VERSION }}" || true
           git tag ${{ env.CONTAINERD_VERSION }}
-          git push origin ${{ env.CONTAINERD_VERSION }}
+          git push origin ${{ env.CONTAINERD_VERSION }}  || true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create Release
         if : steps.check-release.outputs.create == '1'
         run: |
-          gh release create ${{ env.CONTAINERD_VERSION }} -R ${{ github.repository }} --notes "**Full Changelog**: [${{ env.CONTAINERD_VERSION }}](https://github.com/containerd/containerd/releases/tag/${{ env.CONTAINERD_VERSION }})"
+          gh release create ${{ env.CONTAINERD_VERSION }} -R ${{ github.repository }} --title ${{ env.CONTAINERD_VERSION }} --notes "**Full Changelog**: [${{ env.CONTAINERD_VERSION }}](https://github.com/containerd/containerd/releases/tag/${{ env.CONTAINERD_VERSION }})"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -104,22 +104,24 @@ jobs:
       - uses: docker/setup-buildx-action@v3
 
       - name: Check Release
-        id: check-binaries
+        id: create-binaries
         run: |
           gh release view ${{ env.CONTAINERD_VERSION }} -R ${{ github.repository }} | grep containerd-.*.tar.gz >/dev/null 2>&1 || echo "create=1" >> $GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup QEMU
+        if : steps.create-binaries.outputs.create == '1'
         run: docker run --rm --privileged ghcr.io/loong64/qemu-user-static --reset -p yes
 
       - name: Build Containerd Binaries
-        if : steps.check-binaries.outputs.create == '1'
+        if : steps.create-binaries.outputs.create == '1'
         run: |
-          docker buildx build --platform linux/loong64 -t containerd-static-loong64:${{ env.CONTAINERD_VERSION }} -f binaries/Dockerfile . --load
+          cd binaries
+          docker buildx build --platform linux/loong64 -t containerd-static-loong64:${{ env.CONTAINERD_VERSION }} . --load
 
       - name: Upgrade Release
-        if : steps.check-binaries.outputs.create == '1'
+        if : steps.create-binaries.outputs.create == '1'
         run: |
           docker run --rm -v $(pwd)/dist:/dist containerd-static-loong64:${{ env.CONTAINERD_VERSION }}
           ls -al dist
@@ -133,7 +135,7 @@ jobs:
     steps:
       - name: Get Version
         run: |
-          CONTAINERD_VERSION=$(curl -sSL https://github.com/docker/containerd-packaging/raw/master/debian/changelog | head -n 1 | grep -oP '\(\K[^\)]+' | cut -d'-' -f1)
+          CONTAINERD_VERSION=v$(curl -sSL https://github.com/docker/containerd-packaging/raw/master/debian/changelog | head -n 1 | grep -oP '\(\K[^\)]+' | cut -d'-' -f1)
           echo "CONTAINERD_VERSION=${CONTAINERD_VERSION}" >> $GITHUB_ENV
 
       - uses: actions/checkout@v4
@@ -143,22 +145,23 @@ jobs:
       - uses: docker/setup-buildx-action@v3
 
       - name: Check Release
-        id: check-package
+        id: create-package
         run: |
-          gh release view ${{ env.CONTAINERD_VERSION }} -R ${{ github.repository }} | grep container-.*.deb >/dev/null 2>&1 || echo "create=1" >> $GITHUB_OUTPUT
+          gh release view ${{ env.CONTAINERD_VERSION }} -R ${{ github.repository }} | grep containerd.*.deb >/dev/null 2>&1 || echo "create=1" >> $GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup QEMU
+        if : steps.create-package.outputs.create == '1'
         run: docker run --rm --privileged ghcr.io/loong64/qemu-user-static --reset -p yes
 
       - name: Build Containerd Package
-        if : steps.check-package.outputs.create == '1'
+        if : steps.create-package.outputs.create == '1'
         run: |
           bash build-containerd.sh
 
       - name: Upgrade Release
-        if : steps.check-package.outputs.create == '1'
+        if : steps.create-package.outputs.create == '1'
         run: |
           ls -al dist
           gh release upload ${{ env.CONTAINERD_VERSION }} -R ${{ github.repository }} dist/*
