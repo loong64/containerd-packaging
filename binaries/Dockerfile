@@ -15,7 +15,7 @@ RUN set -ex; \
     apt-get install -y ${DEPENDENCIES}; \
     rm -rf /var/lib/apt/lists/*
 
-ARG CONTAINERD_VERSION=v1.7.13
+ARG CONTAINERD_VERSION=v1.7.17
 
 ENV CONTAINERD_VERSION=${CONTAINERD_VERSION}
 
