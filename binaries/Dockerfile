@@ -1,4 +1,4 @@
-FROM ghcr.io/loong64/golang:1.21-trixie as builder
+FROM ghcr.io/loong64/golang:1.21-trixie AS builder
 
 ARG DEPENDENCIES="\
     dpkg-dev \
@@ -6,6 +6,7 @@ ARG DEPENDENCIES="\
     git-lfs \
     make \
     pkg-config\
+    libbtrfs-dev \
     libseccomp-dev \
     btrfs-progs \
     gcc"
