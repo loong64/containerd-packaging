@@ -6,6 +6,7 @@ ARG DEPENDENCIES="\
     git-lfs \
     make \
     pkg-config\
+    libbtrfs-dev \
     libseccomp-dev \
     btrfs-progs \
     gcc"
