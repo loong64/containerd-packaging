@@ -1,8 +1,8 @@
 diff --git a/scripts/checkout.sh b/scripts/checkout.sh
-index e53a9e4..c96811b 100755
+index baa8f59..723b8dd 100755
 --- a/scripts/checkout.sh
 +++ b/scripts/checkout.sh
-@@ -29,6 +29,37 @@ checkout() (
+@@ -51,6 +51,37 @@ checkout() (
  	fi
  	git -C "$SRC" fetch --update-head-ok --depth 1 origin "$REF_FETCH"
  	git -C "$SRC" checkout -q "$REF"
@@ -39,4 +39,4 @@ index e53a9e4..c96811b 100755
 +	esac
  )
  
- 
+ # Only execute checkout function above if this file is executed, not sourced from another script

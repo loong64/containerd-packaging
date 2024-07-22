@@ -10,7 +10,7 @@ REF=${CONTAINERD_VERSION}
 TMPDIR=$(mktemp -d)
 
 git clone --depth=1 https://github.com/docker/containerd-packaging "${TMPDIR}"
-cp container.patch "${TMPDIR}"
+cp containerd.patch "${TMPDIR}"
 
 pushd "${TMPDIR}" || exit 1
 
@@ -28,7 +28,7 @@ sed -i 's@DOCKER_BUILDKIT=1 docker build @DOCKER_BUILDKIT=1 docker buildx build 
 # libcontainer/system/syscall_linux_64.go not support linux/loong64
 # vendor/github.com/cilium/ebpf not support linux/loong64
 #
-git apply container.patch || exit 1
+git apply containerd.patch || exit 1
 
 make REF=${REF} BUILD_IMAGE=ghcr.io/loong64/debian:trixie-slim
 
