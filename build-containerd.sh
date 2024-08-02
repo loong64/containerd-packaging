@@ -21,7 +21,7 @@ pushd "${TMPDIR}" || exit 1
 sed -i '/syntax=docker/d' dockerfiles/deb.dockerfile
 sed -i 's@ca-certificates@ca-certificates libbtrfs-dev@g' dockerfiles/deb.dockerfile
 sed -i 's@GOLANG_IMAGE=golang@GOLANG_IMAGE=ghcr.io/loong64/golang@g' common/common.mk
-sed -i 's@DOCKER_BUILDKIT=1 docker build @DOCKER_BUILDKIT=1 docker buildx build --platform linux/loong64 --load @g' Makefile
+sed -i 's@ARCH=$(shell uname -m)@ARCH=loong64@g' Makefile
 
 ################################################################
 # See. https://github.com/containerd/containerd
