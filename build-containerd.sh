@@ -1,9 +1,9 @@
 #!/bin/bash
 #
-CONTAINERD_VERSION=v1.7.21
+CONTAINERD_VERSION=v1.7.22
 
 ################################################################
-# REF: v1.7.21
+# REF: v1.7.22
 #
 REF=${CONTAINERD_VERSION}
 
