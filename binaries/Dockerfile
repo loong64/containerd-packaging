@@ -1,4 +1,6 @@
-FROM ghcr.io/loong64/golang:1.21-trixie AS builder
+ARG GOLANG_VERSION=1.23
+
+FROM ghcr.io/loong64/golang:${GOLANG_VERSION}-trixie AS builder
 
 ARG DEPENDENCIES="\
     dpkg-dev \
@@ -16,7 +18,7 @@ RUN set -ex; \
     apt-get install -y ${DEPENDENCIES}; \
     rm -rf /var/lib/apt/lists/*
 
-ARG CONTAINERD_VERSION=v1.7.22
+ARG CONTAINERD_VERSION=v2.0.0
 
 ENV CONTAINERD_VERSION=${CONTAINERD_VERSION}
 
@@ -25,17 +27,7 @@ ARG WORKDIR=/opt/containerd
 RUN set -ex; \
     git clone -b ${CONTAINERD_VERSION} --depth=1 https://github.com/containerd/containerd ${WORKDIR}
 
-ADD *.patch /opt/
-
 WORKDIR ${WORKDIR}
-
-RUN set -ex; \
-    sed -i 's@|| riscv64@|| riscv64 || loong64@g' vendor/github.com/cilium/ebpf/internal/endian_le.go; \
-    sed -i 's@ppc64le riscv64@ppc64le riscv64 loong64@g' vendor/github.com/cilium/ebpf/internal/endian_le.go; \
-    sed -i "s@--dirty='.m' @@g" Makefile; \
-    sed -i 's@$(shell if ! git diff --no-ext-diff --quiet --exit-code; then echo .m; fi)@@g' Makefile; \
-    git apply /opt/*.patch; \
-    go mod tidy
 
 RUN set -ex; \
     make release static-release cri-release cri-cni-release; \
