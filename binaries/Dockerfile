@@ -38,6 +38,7 @@ RUN set -ex; \
         sed -i "s@--dirty='.m' @@g" Makefile; \
         sed -i 's@$(shell if ! git diff --no-ext-diff --quiet --exit-code; then echo .m; fi)@@g' Makefile; \
         git apply /opt/*.patch; \
+        go mod tidy; \
     fi
 
 RUN set -ex; \
