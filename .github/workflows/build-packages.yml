@@ -61,7 +61,7 @@ jobs:
       - name: Get Version
         run: |
           echo "========== Build Args =========="
-          echo "CONTAINERD_VERSION=${PACKAGE_VERSION}"
+          echo "CONTAINERD_VERSION=${CONTAINERD_VERSION}"
 
       - uses: actions/checkout@v4
         with:
@@ -103,11 +103,17 @@ jobs:
       - name: Get Version
         run: |
           echo "========== Build Args =========="
-          echo "CONTAINERD_VERSION=${PACKAGE_VERSION}"
+          echo "CONTAINERD_VERSION=${CONTAINERD_VERSION}"
 
       - uses: actions/checkout@v4
         with:
           ref: ${{ env.CONTAINERD_VERSION }}
+
+      - uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: build-packages-${{ github.sha }}
+          restore-keys: build-packages-
         
       - uses: docker/setup-buildx-action@v3
 
@@ -123,10 +129,20 @@ jobs:
         run: docker run --rm --privileged ghcr.io/loong64/qemu-user-static --reset -p yes
 
       - name: Build Containerd Binaries
+        uses: docker/build-push-action@v6
         if : steps.create-binaries.outputs.create == '1'
-        run: |
-          cd binaries
-          docker buildx build --platform linux/loong64 -t containerd-static-loong64:${{ env.CONTAINERD_VERSION }} . --load
+        with:
+          context: binaries
+          platforms: linux/loong64
+          push: false
+          load: true
+          build-args: |
+            CONTAINERD_VERSION=${{ env.CONTAINERD_VERSION }}
+          tags: |
+            containerd-static-loong64:${{ env.CONTAINERD_VERSION }}
+          outputs: type=image,oci-mediatypes=true,compression=zstd,compression-level=3,force-compression=true
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
 
       - name: Upgrade Release
         if : steps.create-binaries.outputs.create == '1'
@@ -136,3 +152,9 @@ jobs:
           gh release upload ${{ env.CONTAINERD_VERSION }} -R ${{ github.repository }} dist/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Move cache
+        if : steps.create-binaries.outputs.create == '1'
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
