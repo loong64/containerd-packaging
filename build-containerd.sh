@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-CONTAINERD_VERSION=v2.0.0
+CONTAINERD_VERSION=v1.7.24
 
 ################################################################
 # REF: v2.0.0
