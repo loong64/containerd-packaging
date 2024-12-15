@@ -35,6 +35,7 @@ ADD *.patch /opt/
 WORKDIR ${WORKDIR}
 
 RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
     set -ex \
     && \
     if echo ${CONTAINERD_VERSION} | grep -q "v1"; then \
@@ -47,6 +48,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     fi
 
 RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
     set -ex \
     && make release static-release cri-release cri-cni-release \
     && mkdir dist \
