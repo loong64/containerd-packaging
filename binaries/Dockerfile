@@ -21,7 +21,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && apt-get update \
     && apt-get install -y ${DEPENDENCIES}
 
-ARG CONTAINERD_VERSION=v2.0.0
+ARG RUNC_VERSION=v1.1.14 \
+    CONTAINERD_VERSION=v2.0.0
 
 ENV CONTAINERD_VERSION=${CONTAINERD_VERSION}
 
@@ -37,15 +38,16 @@ WORKDIR ${WORKDIR}
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     set -ex \
+    && echo "${RUNC_VERSION}" > "script/setup/runc-version" \
     && \
     if echo ${CONTAINERD_VERSION} | grep -q "v1"; then \
         sed -i 's@|| riscv64@|| riscv64 || loong64@g' vendor/github.com/cilium/ebpf/internal/endian_le.go; \
         sed -i 's@ppc64le riscv64@ppc64le riscv64 loong64@g' vendor/github.com/cilium/ebpf/internal/endian_le.go; \
-        sed -i "s@--dirty='.m' @@g" Makefile; \
-        sed -i 's@$(shell if ! git diff --no-ext-diff --quiet --exit-code; then echo .m; fi)@@g' Makefile; \
-        git apply /opt/*.patch; \
-        go mod tidy; \
-    fi
+    fi \
+    && sed -i "s@--dirty='.m' @@g" Makefile \
+    && sed -i 's@$(shell if ! git diff --no-ext-diff --quiet --exit-code; then echo .m; fi)@@g' Makefile \
+    && git apply /opt/*.patch \
+    && go mod tidy
 
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \

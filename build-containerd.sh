@@ -1,5 +1,6 @@
 #!/bin/bash
 #
+RUNC_VERSION=v1.1.14
 CONTAINERD_VERSION=v2.0.0
 
 ################################################################
@@ -32,6 +33,7 @@ if echo "${CONTAINERD_VERSION}" | grep -q "v1"; then
   git apply /tmp/containerd-v1.patch || exit 1
 fi
 
+export RUNC_VERSION=${RUNC_VERSION}
 make REF=${REF} BUILD_IMAGE=ghcr.io/loong64/debian:trixie-slim
 
 popd || exit 1
