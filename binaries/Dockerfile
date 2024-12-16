@@ -43,10 +43,10 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     if echo ${CONTAINERD_VERSION} | grep -q "v1"; then \
         sed -i 's@|| riscv64@|| riscv64 || loong64@g' vendor/github.com/cilium/ebpf/internal/endian_le.go; \
         sed -i 's@ppc64le riscv64@ppc64le riscv64 loong64@g' vendor/github.com/cilium/ebpf/internal/endian_le.go; \
+        git apply /opt/*.patch; \
     fi \
     && sed -i "s@--dirty='.m' @@g" Makefile \
     && sed -i 's@$(shell if ! git diff --no-ext-diff --quiet --exit-code; then echo .m; fi)@@g' Makefile \
-    && git apply /opt/*.patch \
     && go mod tidy
 
 RUN --mount=type=cache,target=/go/pkg/mod \
