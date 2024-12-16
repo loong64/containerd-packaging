@@ -1,24 +1,24 @@
 diff --git a/scripts/checkout.sh b/scripts/checkout.sh
-index baa8f59..dc8737f 100755
+index baa8f59..993540c 100755
 --- a/scripts/checkout.sh
 +++ b/scripts/checkout.sh
-@@ -51,6 +51,38 @@ checkout() (
+@@ -51,6 +51,37 @@ checkout() (
  	fi
  	git -C "$SRC" fetch --update-head-ok --depth 1 origin "$REF_FETCH"
  	git -C "$SRC" checkout -q "$REF"
 +	case "$SRC" in
 +		"src/github.com/opencontainers/runc")
-+			if [ -f "$SRC/libcontainer/system/syscall_linux_64.go" ]; then
-+				if ! grep -q "s390x || loong64" "$SRC/libcontainer/system/syscall_linux_64.go"; then
-+					sed -i "s@|| s390x@|| s390x || loong64@g" "$SRC/libcontainer/system/syscall_linux_64.go"
++			if [ -f "$SRC/libcontainer/seccomp/patchbpf/enosys_linux.go" ]; then
++				if ! grep -q "LOONGARCH64" "$SRC/libcontainer/seccomp/patchbpf/enosys_linux.go"; then
++					CURRENT_DIR=$(pwd)
++					cd "$SRC"
++					curl -sSL "https://git.altlinux.org/tasks/archive/done/_352/361175/gears/100/git?p=git;a=blob_plain;f=.gear/runc-alt-libcontainer-loongarch64-support.patch;hb=ff0eabdba6265ddb4aa20d39f4a0ade5e59790f4" | git apply
++					go get -u github.com/seccomp/libseccomp-golang@v0.10.1-0.20240814065753-28423ed7600d
++					go mod vendor
++					sed -i "s@--dirty @@g" Makefile
++					cd "$CURRENT_DIR"
 +				fi
 +			fi
-+			if [ -f "$SRC/libcontainer/system/syscall_linux_64.go" ]; then
-+				if ! grep -q "s390x loong64" "$SRC/libcontainer/system/syscall_linux_64.go"; then
-+					sed -i "riscv64 s390x@riscv64 s390x loong64@g" "$SRC/libcontainer/system/syscall_linux_64.go"
-+				fi
-+			fi
-+			sed -i "s@--dirty @@g" "$SRC/Makefile"
 +			;;
 +		"src/github.com/containerd/containerd")
 +			if [ -f "$SRC/vendor/github.com/cilium/ebpf/internal/endian_le.go" ]; then
@@ -33,7 +33,6 @@ index baa8f59..dc8737f 100755
 +			fi
 +			sed -i "s@--dirty='.m' @@g" "$SRC/Makefile"
 +			sed -i 's@$(shell if ! git diff --no-ext-diff --quiet --exit-code; then echo .m; fi)@@g' "$SRC/Makefile"
-+			echo "${RUNC_VERSION:-v1.1.14}" > "$SRC/script/setup/runc-version"
 +			;;
 +		*) echo "None";
 +			;;

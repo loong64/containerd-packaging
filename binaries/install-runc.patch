@@ -1,0 +1,15 @@
+diff --git a/script/setup/install-runc b/script/setup/install-runc
+index 67743d7..74eec12 100755
+--- a/script/setup/install-runc
++++ b/script/setup/install-runc
+@@ -37,6 +37,10 @@ function install_runc() {
+ 	git clone "${RUNC_REPO}" "${TMPROOT}"/runc
+ 	pushd "${TMPROOT}"/runc
+ 	git checkout "${RUNC_VERSION}"
++	curl -sSL "https://git.altlinux.org/tasks/archive/done/_352/361175/gears/100/git?p=git;a=blob_plain;f=.gear/runc-alt-libcontainer-loongarch64-support.patch;hb=ff0eabdba6265ddb4aa20d39f4a0ade5e59790f4" | git apply
++	go get -u github.com/seccomp/libseccomp-golang@v0.10.1-0.20240814065753-28423ed7600d
++	go mod vendor
++	sed -i "s@--dirty @@g" Makefile
+ 	env -u VERSION make BUILDTAGS='seccomp' runc
+ 	$SUDO make install
+ 	popd

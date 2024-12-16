@@ -1,6 +1,5 @@
 #!/bin/bash
 #
-RUNC_VERSION=v1.1.14
 CONTAINERD_VERSION=v2.0.0
 
 ################################################################
@@ -12,7 +11,7 @@ TMPDIR=$(mktemp -d)
 
 git clone --depth=1 https://github.com/docker/containerd-packaging "${TMPDIR}"
 
-cp -f containerd-v1.patch /tmp/containerd-v1.patch
+cp -f containerd.patch /tmp/containerd.patch
 
 pushd "${TMPDIR}" || exit 1
 ################################################################
@@ -25,15 +24,17 @@ sed -i 's@GOLANG_IMAGE=golang@GOLANG_IMAGE=ghcr.io/loong64/golang@g' common/comm
 sed -i 's@ARCH=$(shell uname -m)@ARCH=loong64@g' Makefile
 
 ################################################################
+# See. https://github.com/opencontainers/runc
+# libcontainer/seccomp/patchbpf/enosys_linux.go not support linux/loong64
+# vendor/github.com/seccomp/libseccomp-golang/seccomp_internal.go not support linux/loong64
+#
 # See. https://github.com/containerd/containerd
 # libcontainer/system/syscall_linux_64.go not support linux/loong64
 # vendor/github.com/cilium/ebpf not support linux/loong64
 #
-if echo "${CONTAINERD_VERSION}" | grep -q "v1"; then
-  git apply /tmp/containerd-v1.patch || exit 1
-fi
 
-export RUNC_VERSION=${RUNC_VERSION}
+git apply /tmp/containerd.patch || exit 1
+
 make REF=${REF} BUILD_IMAGE=ghcr.io/loong64/debian:trixie-slim
 
 popd || exit 1
