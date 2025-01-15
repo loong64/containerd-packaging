@@ -1,5 +1,8 @@
 #!/bin/bash
 #
+
+set -e
+
 CONTAINERD_VERSION=v2.0.0
 
 ################################################################
@@ -19,7 +22,6 @@ pushd "${TMPDIR}" || exit 1
 # docker.io/docker/dockerfile not support linux/loong64
 #
 sed -i '/syntax=docker/d' dockerfiles/deb.dockerfile
-sed -i 's@ca-certificates@ca-certificates libbtrfs-dev@g' dockerfiles/deb.dockerfile
 sed -i 's@GOLANG_IMAGE=golang@GOLANG_IMAGE=ghcr.io/loong64/golang@g' common/common.mk
 sed -i 's@ARCH=$(shell uname -m)@ARCH=loong64@g' Makefile
 

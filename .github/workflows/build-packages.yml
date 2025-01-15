@@ -18,6 +18,10 @@ jobs:
         id: get-version
         run: |
           PACKAGE_VERSION=v$(curl -sSL https://github.com/docker/containerd-packaging/raw/main/debian/changelog | head -n 1 | grep -oP '\(\K[^\)]+' | cut -d'-' -f1)
+          if [ -z "$PACKAGE_VERSION" ] || [ "$PACKAGE_VERSION" == "null" ]; then
+            echo "Failed to get version"
+            exit 1
+          fi
           sed -i "s@CONTAINERD_VERSION=.*@CONTAINERD_VERSION=${PACKAGE_VERSION}@g" build-containerd.sh
           sed -i "s@ARG CONTAINERD_VERSION=.*@ARG CONTAINERD_VERSION=${PACKAGE_VERSION}@g" binaries/Dockerfile
           echo "CONTAINERD_VERSION=${PACKAGE_VERSION}" >> $GITHUB_ENV

@@ -5,12 +5,9 @@ FROM ghcr.io/loong64/golang:${GOLANG_VERSION}-trixie AS builder
 ARG DEPENDENCIES="\
     dpkg-dev \
     git \
-    git-lfs \
     make \
     pkg-config\
-    libbtrfs-dev \
     libseccomp-dev \
-    btrfs-progs \
     gcc"
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
