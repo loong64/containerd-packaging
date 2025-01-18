@@ -18,7 +18,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && apt-get update \
     && apt-get install -y ${DEPENDENCIES}
 
-ARG CONTAINERD_VERSION=v2.0.0
+ARG CONTAINERD_VERSION=v1.7.25
 
 ENV CONTAINERD_VERSION=${CONTAINERD_VERSION}
 
