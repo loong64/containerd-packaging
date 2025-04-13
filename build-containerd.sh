@@ -1,6 +1,5 @@
 #!/bin/bash
 #
-CONTAINERD_VERSION=v2.0.0
 
 BUILD_DEB=0
 BUILD_RPM=0
@@ -13,21 +12,21 @@ while [[ $# > 0 ]]; do
             echo
             echo "Global Options:"
             echo -e "  -h, --help  \t Show this help message and exit"
-            echo -e "  --deb  \t Build Debian-trixie deb package"
-            echo -e "  --rpm  \t Build OpenCloudOS-23 rpm package"
+            echo -e "  --distro  \t Specify the distribution (e.g., debian, anolis)"
+            echo -e "  --suite   \t Specify the suite or release codename (e.g., trixie, 23)"
             exit 0
             ;;
-        --deb)
-            BUILD_DEB=1
+        --distro)
+            DISTRO=$2
             shift
             ;;
-        --rpm)
-            BUILD_RPM=1
+        --suite)
+            SUITE=$2
             shift
             ;;
         *)
-            echo "install: Unknown option $1"
-            echo "eg: $0 --deb --rpm"
+            echo "Error: Unknown option $1"
+            echo "eg: $0 --distro debian --suite trixie"
             exit 1
             ;;
     esac
@@ -37,14 +36,31 @@ done
 ################################################################
 # REF: v2.0.0
 #
-REF=${CONTAINERD_VERSION}
+REF=${CONTAINERD_VERSION:?}
 
 TMPDIR=$(mktemp -d)
 
 git clone --depth=1 https://github.com/docker/containerd-packaging "${TMPDIR}"
 
+case "${DISTRO}" in
+    debian)
+        BUILD_DEB=1
+        ;;
+    anolis)
+        BUILD_RPM=1
+        cp -f anolis-23/Dockerfile "${TMPDIR}/dockerfiles/rpm.dockerfile"
+        ;;
+    opencloudos)
+        BUILD_RPM=1
+        cp -f opencloudos-23/Dockerfile "${TMPDIR}/dockerfiles/rpm.dockerfile"
+        ;;
+    *)
+        echo "Error: Unknown distribution ${DISTRO}"
+        exit 1
+        ;;
+esac
+
 cp -f containerd.patch /tmp/containerd.patch
-cp -f opencloudos-23/Dockerfile "${TMPDIR}/dockerfiles/rpm.dockerfile"
 
 pushd "${TMPDIR}" || exit 1
 ################################################################
@@ -66,22 +82,16 @@ sed -i 's@ARCH=$(shell uname -m)@ARCH=loong64@g' Makefile
 #
 
 git apply /tmp/containerd.patch || exit 1
-
-if [ "${BUILD_DEB}" = '1' ]; then
-    make REF=${REF} BUILD_IMAGE=ghcr.io/loong64/debian:trixie-slim
-fi
-if [ "${BUILD_RPM}" = '1' ]; then
-    make REF=${REF} BUILD_IMAGE=ghcr.io/loong64/opencloudos:23
-fi
+make REF=${REF} BUILD_IMAGE=ghcr.io/loong64/${DISTRO}:${SUITE}
 
 popd || exit 1
 
 mkdir -p dist
 if [ "${BUILD_DEB}" = '1' ]; then
-    mv ${TMPDIR}/build/debian/trixie/loong64/* dist/
+    mv ${TMPDIR}/build/${DISTRO}/${SUITE}/loong64/* dist/
 fi
 if [ "${BUILD_RPM}" = '1' ]; then
-    mv ${TMPDIR}/build/opencloudos/23/loongarch64/* dist/
+    mv ${TMPDIR}/build/${DISTRO}/${SUITE}/loongarch64/* dist/
 fi
 
 rm -rf "${TMPDIR:?}"
