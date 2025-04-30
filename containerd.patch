@@ -1,5 +1,5 @@
 diff --git a/scripts/checkout.sh b/scripts/checkout.sh
-index baa8f59..993540c 100755
+index baa8f59..4032751 100755
 --- a/scripts/checkout.sh
 +++ b/scripts/checkout.sh
 @@ -51,6 +51,37 @@ checkout() (
@@ -22,8 +22,8 @@ index baa8f59..993540c 100755
 +			;;
 +		"src/github.com/containerd/containerd")
 +			if [ -f "$SRC/vendor/github.com/cilium/ebpf/internal/endian_le.go" ]; then
-+				if ! grep -q "riscv64 || loong64" "$SRC/vendor/github.com/cilium/ebpf/internal/endian_le.go"; then
-+					sed -i "s@|| riscv64@|| riscv64 || loong64@g" "$SRC/vendor/github.com/cilium/ebpf/internal/endian_le.go"
++				if ! grep -q "arm64 || loong64" "$SRC/vendor/github.com/cilium/ebpf/internal/endian_le.go"; then
++					sed -i "s@|| arm64@|| arm64 || loong64@g" "$SRC/vendor/github.com/cilium/ebpf/internal/endian_le.go"
 +				fi
 +			fi
 +			if [ -f "$SRC/vendor/github.com/cilium/ebpf/internal/endian_le.go" ]; then
