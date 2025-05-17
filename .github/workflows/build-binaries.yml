@@ -12,7 +12,6 @@ jobs:
       CONTAINERD_VERSION: ${{ steps.get-version.outputs.CONTAINERD_VERSION }}
     steps:
       - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
 
       - name: Get Version
         id: get-version
@@ -69,6 +68,13 @@ jobs:
           echo "========== Build Args =========="
           echo "CONTAINERD_VERSION=${CONTAINERD_VERSION}"
 
+      - name: Check Release
+        id: create-binaries
+        run: |
+          gh release view ${{ env.CONTAINERD_VERSION }} -R ${{ github.repository }} | grep containerd-.*.sha256sum >/dev/null 2>&1 || echo "create=1" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - uses: actions/checkout@v4
         with:
           ref: ${{ env.CONTAINERD_VERSION }}
@@ -81,13 +87,6 @@ jobs:
         
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
-
-      - name: Check Release
-        id: create-binaries
-        run: |
-          gh release view ${{ env.CONTAINERD_VERSION }} -R ${{ github.repository }} | grep containerd-.*.sha256sum >/dev/null 2>&1 || echo "create=1" >> $GITHUB_OUTPUT
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Containerd Binaries
         uses: docker/build-push-action@v6

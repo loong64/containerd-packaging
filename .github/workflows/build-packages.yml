@@ -16,11 +16,12 @@ jobs:
       - name: Get Version
         id: get-version
         run: |
-          PACKAGE_VERSION=v$(curl -sSL https://github.com/docker/containerd-packaging/raw/main/debian/changelog | head -n 1 | grep -oP '\(\K[^\)]+' | cut -d'-' -f1)
+          PACKAGE_VERSION=$(curl -sSL https://github.com/docker/containerd-packaging/raw/main/debian/changelog | head -n 1 | grep -oP '\(\K[^\)]+' | cut -d'-' -f1)
           if [ -z "$PACKAGE_VERSION" ] || [ "$PACKAGE_VERSION" == "null" ]; then
             echo "Failed to get version"
             exit 1
           fi
+          PACKAGE_VERSION=v$PACKAGE_VERSION
           sed -i "s@ARG CONTAINERD_VERSION=.*@ARG CONTAINERD_VERSION=${PACKAGE_VERSION}@g" binaries/Dockerfile
           echo "CONTAINERD_VERSION=${PACKAGE_VERSION}" >> $GITHUB_ENV
           echo "CONTAINERD_VERSION=${PACKAGE_VERSION}" >> $GITHUB_OUTPUT
@@ -60,6 +61,13 @@ jobs:
     env:
       CONTAINERD_VERSION: ${{ needs.check-version.outputs.CONTAINERD_VERSION }}
     steps:
+      - name: Check Release
+        id: create-binaries
+        run: |
+          gh release view ${{ env.CONTAINERD_VERSION }} -R ${{ github.repository }} | grep containerd-.*.sha256sum >/dev/null 2>&1 || echo "create=1" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - uses: actions/checkout@v4
         with:
           ref: ${{ env.CONTAINERD_VERSION }}
@@ -72,13 +80,6 @@ jobs:
         
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
-
-      - name: Check Release
-        id: create-binaries
-        run: |
-          gh release view ${{ env.CONTAINERD_VERSION }} -R ${{ github.repository }} | grep containerd-.*.sha256sum >/dev/null 2>&1 || echo "create=1" >> $GITHUB_OUTPUT
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Containerd Binaries
         uses: docker/build-push-action@v6
@@ -122,16 +123,16 @@ jobs:
         distro: [ 'debian' ]
         suite: [ 'trixie' ]
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-qemu-action@v3
-      - uses: docker/setup-buildx-action@v3
-
       - name: Check Release
         id: create-package
         run: |
           gh release view ${{ env.CONTAINERD_VERSION }} -R ${{ github.repository }} | grep containerd.*.deb >/dev/null 2>&1 || echo "create=1" >> $GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
 
       - name: Build Containerd Package
         if : steps.create-package.outputs.create == '1'
@@ -158,10 +159,6 @@ jobs:
         distro: [ 'anolis', 'opencloudos' ]
         suite: [ '23' ]
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-qemu-action@v3
-      - uses: docker/setup-buildx-action@v3
-
       - name: Check Release
         id: create-package
         run: |
@@ -175,6 +172,10 @@ jobs:
           esac
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
 
       - name: Build Containerd Package
         if : steps.create-package.outputs.create == '1'
