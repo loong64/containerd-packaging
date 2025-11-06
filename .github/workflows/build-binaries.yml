@@ -9,6 +9,7 @@ jobs:
   check-version:
     runs-on: ubuntu-latest
     outputs:
+      GO_VERSION: ${{ steps.get-version.outputs.GO_VERSION }}
       CONTAINERD_VERSION: ${{ steps.get-version.outputs.CONTAINERD_VERSION }}
     steps:
       - uses: actions/checkout@v4
@@ -22,12 +23,19 @@ jobs:
             echo "Failed to get version"
             exit 1
           fi
+          GO_VERSION=$(curl -sSL https://github.com/containerd/containerd/raw/refs/tags/${BINARIES_VERSION}/go.mod | head -n 4 | grep '^go ' | awk '{print $2}')
+          if [ -z "$GO_VERSION" ] || [ "$GO_VERSION" == "null" ]; then
+            echo "Failed to get go version"
+            exit 1
+          fi
           sed -i "s@CONTAINERD_VERSION=.*@CONTAINERD_VERSION=${PACKAGE_VERSION}@g" build-containerd.sh
           sed -i "s@ARG CONTAINERD_VERSION=.*@ARG CONTAINERD_VERSION=${BINARIES_VERSION}@g" binaries/Dockerfile
           echo "CONTAINERD_VERSION=${BINARIES_VERSION}" >> $GITHUB_ENV
           echo "CONTAINERD_VERSION=${BINARIES_VERSION}" >> $GITHUB_OUTPUT
+          echo "GO_VERSION=${GO_VERSION}" >> $GITHUB_OUTPUT
           echo ""
           echo "========== Build Args =========="
+          echo "GO_VERSION=${GO_VERSION}"
           echo "PACKAGE_VERSION=${PACKAGE_VERSION}"
           echo "BINARIES_VERSION=${BINARIES_VERSION}"
 
@@ -61,6 +69,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: check-version
     env:
+      GO_VERSION: ${{ needs.check-version.outputs.GO_VERSION }}
       CONTAINERD_VERSION: ${{ needs.check-version.outputs.CONTAINERD_VERSION }}
     steps:
       - name: Get Version
@@ -97,6 +106,7 @@ jobs:
           push: false
           load: true
           build-args: |
+            GO_VERSION=${{ env.GO_VERSION }}
             CONTAINERD_VERSION=${{ env.CONTAINERD_VERSION }}
           tags: |
             containerd-static-loong64:${{ env.CONTAINERD_VERSION }}

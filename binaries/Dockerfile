@@ -1,6 +1,6 @@
-ARG GOLANG_VERSION=1.23
+ARG GO_VERSION=1.25
 
-FROM ghcr.io/loong64/golang:${GOLANG_VERSION}-trixie AS builder
+FROM ghcr.io/loong64/golang:${GO_VERSION}-trixie AS builder
 
 ARG DEPENDENCIES="\
     dpkg-dev \
