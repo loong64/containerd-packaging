@@ -10,6 +10,10 @@ ARG DEPENDENCIES="\
     libseccomp-dev \
     gcc"
 
+RUN set -ex \
+    && sed -i 's/unreleased//g' /etc/apt/sources.list.d/debian.sources \
+    && sed -i 's/debian-ports/debian/g' /etc/apt/sources.list.d/debian.sources
+
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     set -ex \
