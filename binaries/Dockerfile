@@ -43,10 +43,10 @@ RUN --mount=type=cache,target=/go/pkg/mod \
         sed -i 's@|| riscv64@|| riscv64 || loong64@g' vendor/github.com/cilium/ebpf/internal/endian_le.go; \
         sed -i 's@ppc64le riscv64@ppc64le riscv64 loong64@g' vendor/github.com/cilium/ebpf/internal/endian_le.go; \
         git apply /opt/install-imgcrypt.patch; \
+        git apply /opt/install-runc.patch; \
+        sed -i "s@--dirty='.m' @@g" Makefile; \
+        sed -i 's@$(shell if ! git diff --no-ext-diff --quiet --exit-code; then echo .m; fi)@@g' Makefile; \
     fi \
-    && git apply /opt/install-runc.patch \
-    && sed -i "s@--dirty='.m' @@g" Makefile \
-    && sed -i 's@$(shell if ! git diff --no-ext-diff --quiet --exit-code; then echo .m; fi)@@g' Makefile \
     && go mod tidy
 
 RUN --mount=type=cache,target=/go/pkg/mod \
